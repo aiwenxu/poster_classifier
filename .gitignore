@@ -105,6 +105,3 @@ venv.bak/
 
 # Mac OS
 .DS_Store
-
-# Poster images
-posters/

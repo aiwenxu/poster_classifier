@@ -16,9 +16,9 @@ def get_label(genre, genre_list):
     genre = genre.split("|")
     for possible_genre in genre_list:
         if possible_genre in genre:
-            label += "1"
+            label += "1 "
         else:
-            label += "0"
+            label += "0 "
     return label
 
 def get_all_labels(data_file, data_dict, genre_list):
@@ -32,11 +32,11 @@ def get_all_labels(data_file, data_dict, genre_list):
 
 def main():
 
-    data_file = pd.read_csv("MovieGenre.csv", encoding="ISO-8859-1")
+    data_file = pd.read_csv("data/MovieGenre.csv", encoding="ISO-8859-1")
     genre_list = get_all_genres(data_file)
     data_dict = {"imdb_id": [], "label": []}
     get_all_labels(data_file, data_dict, genre_list)
-    pd.DataFrame(data=data_dict).to_csv("labels.csv", index=False)
+    pd.DataFrame(data=data_dict).to_csv("data/labels.csv", index=False)
 
 if __name__ == '__main__':
     main()
