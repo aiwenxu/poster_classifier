@@ -3,7 +3,9 @@ import random
 import pandas as pd
 from PIL import Image
 import matplotlib.pyplot as plt
+import torch
 from torch.utils.data import Dataset
+from torchvision.transforms import ToPILImage
 
 class PosterDataset(Dataset):
 
@@ -25,34 +27,41 @@ class PosterDataset(Dataset):
             img = self.transform(img)
         label = self.data.iloc[idx, 1].strip().split(" ")
         label = [int(num) for num in label]
+        label = torch.LongTensor(label)
         title = self.data.iloc[idx, 2]
         return img, label, title, imdb_id
+
+    def random_visualize(self, num):
+
+        indices = []
+
+        for i in range(num):
+            indices.append(random.randint(0, len(self)))
+
+        plt.rcParams["axes.titlesize"] = 4
+
+        for i in range(num):
+            idx = indices[i]
+
+            img, label, title, imdb_id = self[idx]
+            if not isinstance(img, Image.Image):
+                img = ToPILImage()(img)
+
+            print(img.size)
+
+            ax = plt.subplot(1, num, i + 1)
+            plt.tight_layout()
+            plt.imshow(img)
+            ax.set_title('ID #{}: \n{}'.format(imdb_id, title))
+            ax.axis('off')
+
+        plt.show()
 
 # Test PosterDataset by randomly visualizing four of the posters.
 def main():
 
     poster_dataset = PosterDataset(csv_file='data/labels.csv', root_dir='data/posters')
-
-    indices = []
-
-    for i in range(4):
-        indices.append(random.randint(0, len(poster_dataset)))
-
-    plt.rcParams["axes.titlesize"] = 4
-
-    for i in range(4):
-
-        idx = indices[i]
-
-        img, label, title, imdb_id = poster_dataset[idx]
-
-        ax = plt.subplot(1, 4, i + 1)
-        plt.tight_layout()
-        plt.imshow(img)
-        ax.set_title('ID #{}: \n{}'.format(imdb_id, title))
-        ax.axis('off')
-
-    plt.show()
+    poster_dataset.random_visualize(4)
 
 if __name__ == '__main__':
     main()
