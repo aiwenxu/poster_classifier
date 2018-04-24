@@ -25,16 +25,18 @@ def get_all_labels(data_file, data_dict, genre_list):
     for index, row in data_file.iterrows():
         imdb_id = row["imdbId"]
         genre = row["Genre"]
+        title = row["Title"]
         if isinstance(genre, str):
             label = get_label(genre, genre_list)
             data_dict["imdb_id"].append(imdb_id)
+            data_dict["title"].append(title)
             data_dict["label"].append(label)
 
 def main():
 
     data_file = pd.read_csv("data/MovieGenre.csv", encoding="ISO-8859-1")
     genre_list = get_all_genres(data_file)
-    data_dict = {"imdb_id": [], "label": []}
+    data_dict = {"imdb_id": [], "title":[], "label": []}
     get_all_labels(data_file, data_dict, genre_list)
     pd.DataFrame(data=data_dict).to_csv("data/labels.csv", index=False)
 
