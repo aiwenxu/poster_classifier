@@ -1,6 +1,7 @@
 import pandas as pd
 import random
 from PIL import Image
+from helper import quick_print
 
 # This returns ['Short', 'Thriller', 'Family', 'Adventure', 'Documentary', 'Musical', 'Mystery', 'Western', 'Romance',
 # 'Animation', 'Game-Show', 'Horror', 'Biography', 'Film-Noir', 'Reality-TV', 'Fantasy', 'Action', 'History', 'News',
@@ -41,7 +42,7 @@ def get_all_labels(data_file, data_dict, genre_list):
                 data_dict["title"].append(title)
                 data_dict["label"].append(label)
         except OSError:
-            print(imdb_id)
+            quick_print(imdb_id)
 
 def main():
 

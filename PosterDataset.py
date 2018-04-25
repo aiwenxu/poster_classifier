@@ -6,6 +6,7 @@ import matplotlib.pyplot as plt
 import torch
 from torch.utils.data import Dataset
 from torchvision.transforms import ToPILImage
+from helper import quick_print
 
 class PosterDataset(Dataset):
 
@@ -47,7 +48,7 @@ class PosterDataset(Dataset):
             if not isinstance(img, Image.Image):
                 img = ToPILImage()(img)
 
-            print(img.size)
+            quick_print(img.size)
 
             ax = plt.subplot(1, num, i + 1)
             plt.tight_layout()

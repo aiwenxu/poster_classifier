@@ -3,12 +3,13 @@ import torch.nn as nn
 import torch.optim as optim
 from torch.optim import lr_scheduler
 from torch.autograd import Variable
-from torchvision.models import resnet18 as ResNet
 from torch.utils.data import DataLoader
 from torchvision.transforms import Scale, RandomCrop, CenterCrop, ToTensor, Normalize, Compose
 import time
 import copy
 from PosterDataset import PosterDataset
+from CustomizedResNet import get_customized_resnet
+from helper import quick_print, clamp_probs, pickle_stat, plot
 
 def main():
 
@@ -34,23 +35,14 @@ def main():
     # Training details.
 
     use_gpu = torch.cuda.is_available()
-    num_epochs = 2
+    num_epochs = 200
     learning_rate = 0.0001
-    decay_ratio = 0.1
+    decay_ratio = 0.8
     decay_epoch = 7
 
     # Build the model.
 
-    # Freeze all the layers.
-    poster_net = ResNet(pretrained=True)
-    for param in poster_net.parameters():
-        param.requires_grad = False
-
-    # Replace the last layer. The new layer by default has requires_grad as True.
-    num_ftrs = poster_net.fc.in_features
-    poster_net.fc = nn.Linear(num_ftrs, NUM_LABELS)
-
-    # TODO: need to add a sigmoid layer and everything greater than 0.5 is true.
+    poster_net = get_customized_resnet(NUM_LABELS)
 
     if use_gpu:
         poster_net = poster_net.cuda()
@@ -67,14 +59,16 @@ def main():
 
     since = time.time()
 
-    # TODO: after adding sigmoid, rewrite best_acc and lowest_loss.
+    # Set up the storage for the losses and accuracies over training.
+    val_losses = []
+    val_accs = []
+
     best_model_wts = copy.deepcopy(poster_net.state_dict())
-    # best_acc = 0.0
-    lowest_loss = 10000
+    best_acc = 0.0
 
     for epoch in range(num_epochs):
-        print("Epoch {}/{}".format(epoch, num_epochs - 1))
-        print("-" * 10)
+        quick_print("Epoch {}/{}".format(epoch, num_epochs - 1))
+        quick_print("-" * 10)
 
         for phase in ["train", "val"]:
             if phase == "train":
@@ -84,7 +78,7 @@ def main():
                 poster_net.train(False)
 
             running_loss = 0.0
-            # running_corrects = 0
+            running_corrects = 0
 
             for data in loaders[phase]:
                 img, label, title, imdb_id = data
@@ -105,31 +99,38 @@ def main():
                     net_optimizer.step()
 
                 running_loss += loss.data[0] * img.size(0)
-                # running_corrects += torch.sum(prediction == label.data)
+                pred_label = clamp_probs(prediction.data[0])
+                if torch.equal(pred_label, label.data):
+                    running_corrects += 1.0
 
             epoch_loss = running_loss / dataset_sizes[phase]
-            # epoch_acc = running_corrects / dataset_sizes[phase]
+            epoch_acc = running_corrects / dataset_sizes[phase]
 
-            # print('{} Loss: {:.4f} Acc: {:.4f}'.format(phase, epoch_loss, epoch_acc))
-            print("{} Loss: {:.4f}".format(phase, epoch_loss))
+            quick_print("{} Loss: {:.4f} Acc: {:.4f}".format(phase, epoch_loss, epoch_acc))
 
-            # if phase == 'val' and epoch_acc > best_acc:
-            #     best_acc = epoch_acc
-            #     best_model_wts = copy.deepcopy(poster_net.state_dict())
-            if phase == 'val' and epoch_loss < lowest_loss:
-                lowest_loss = epoch_loss
+            if phase == "val":
+                val_losses.append(epoch_loss)
+                val_accs.append(epoch_acc)
+
+            if phase == "val" and epoch_acc > best_acc:
+                best_acc = epoch_acc
                 best_model_wts = copy.deepcopy(poster_net.state_dict())
 
-        print()
+        quick_print("\n")
 
     time_elapsed = time.time() - since
-    print('Training complete in {:.0f}m {:.0f}s'.format(time_elapsed // 60, time_elapsed % 60))
-    # print('Best val Acc: {:4f}'.format(best_acc))
-    print('Lowest val loss: {:4f}'.format(lowest_loss))
+    quick_print("Training complete in {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
+    quick_print("Best val Acc: {:4f}".format(best_acc))
 
     poster_net.load_state_dict(best_model_wts)
 
     torch.save(poster_net.state_dict(), "net_params")
+
+    pickle_stat(val_losses, "val_losses.pkl")
+    pickle_stat(val_accs, "val_accs.pkl")
+
+    plot(val_losses, "val_losses.pdf")
+    plot(val_accs, "val_accs.pdf")
 
 if __name__ == '__main__':
     main()
