@@ -7,11 +7,21 @@ from torch.utils.data import DataLoader
 from torchvision.transforms import Scale, RandomCrop, CenterCrop, ToTensor, Normalize, Compose
 import time
 import copy
+import os
 from PosterDataset import PosterDataset
 from CustomizedResNet import get_customized_resnet
 from helper import quick_print, clamp_probs, pickle_stat, plot
 
 def main():
+
+    # Use HPC to train with different hyperparameters.
+    learning_rates = [0.0005, 0.0001, 0.00005]
+    learning_rate_decays = [0.8, 0.9]
+    parameters = [(lr, lrd) for lr in learning_rates for lrd in learning_rate_decays]
+    SLURM_TASK_ID = int(os.environ['SLURM_ARRAY_TASK_ID'])
+    lr = parameters[SLURM_TASK_ID][0]
+    lrd = parameters[SLURM_TASK_ID][1]
+    quick_print("SLURM TASK {} has learning rate {}, decay ratio {}".format(SLURM_TASK_ID, lr, lrd))
 
     # Data.
 
@@ -36,9 +46,14 @@ def main():
 
     use_gpu = torch.cuda.is_available()
     num_epochs = 200
-    learning_rate = 0.0001
-    decay_ratio = 0.8
+    learning_rate = lr
+    decay_ratio = lrd
     decay_epoch = 7
+
+    # Create folders to save the training stats and results.
+
+    folder_name = str(SLURM_TASK_ID)
+    os.mkdir(folder_name)
 
     # Build the model.
 
@@ -100,7 +115,7 @@ def main():
 
                 running_loss += loss.data[0] * img.size(0)
                 pred_label = clamp_probs(prediction.data[0])
-                if torch.equal(pred_label, label.data):
+                if torch.equal(pred_label, label.data[0]):
                     running_corrects += 1.0
 
             epoch_loss = running_loss / dataset_sizes[phase]
@@ -118,19 +133,21 @@ def main():
 
         quick_print("\n")
 
+        torch.save(poster_net.state_dict(), folder_name + "/current_net_params")
+
     time_elapsed = time.time() - since
     quick_print("Training complete in {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
     quick_print("Best val Acc: {:4f}".format(best_acc))
 
     poster_net.load_state_dict(best_model_wts)
 
-    torch.save(poster_net.state_dict(), "net_params")
+    torch.save(poster_net.state_dict(), folder_name + "/net_params")
 
-    pickle_stat(val_losses, "val_losses.pkl")
-    pickle_stat(val_accs, "val_accs.pkl")
+    pickle_stat(val_losses, folder_name + "/val_losses.pkl")
+    pickle_stat(val_accs, folder_name + "/val_accs.pkl")
 
-    plot(val_losses, "val_losses.pdf")
-    plot(val_accs, "val_accs.pdf")
+    plot(val_losses, folder_name + "/val_losses.pdf")
+    plot(val_accs, folder_name + "val_accs.pdf")
 
 if __name__ == '__main__':
     main()
