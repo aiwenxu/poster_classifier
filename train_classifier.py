@@ -64,7 +64,7 @@ def main():
 
     # Define the loss function, the optimizer and the learning rate decay.
 
-    criterion = nn.MultiLabelMarginLoss()
+    criterion = nn.BCELoss()
 
     net_optimizer = optim.Adam(poster_net.fc.parameters(), lr=learning_rate)
 
@@ -133,7 +133,13 @@ def main():
 
         quick_print("\n")
 
-        torch.save(poster_net.state_dict(), folder_name + "/current_net_params")
+        torch.save(poster_net.state_dict(), folder_name + "/net_params")
+
+        pickle_stat(val_losses, folder_name + "/val_losses.pkl")
+        pickle_stat(val_accs, folder_name + "/val_accs.pkl")
+
+        plot(val_losses, folder_name + "/val_losses.pdf")
+        plot(val_accs, folder_name + "val_accs.pdf")
 
     time_elapsed = time.time() - since
     quick_print("Training complete in {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
@@ -143,14 +149,5 @@ def main():
 
     torch.save(poster_net.state_dict(), folder_name + "/net_params")
 
-    pickle_stat(val_losses, folder_name + "/val_losses.pkl")
-    pickle_stat(val_accs, folder_name + "/val_accs.pkl")
-
-    plot(val_losses, folder_name + "/val_losses.pdf")
-    plot(val_accs, folder_name + "val_accs.pdf")
-
 if __name__ == '__main__':
     main()
-
-
-

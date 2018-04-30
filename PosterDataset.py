@@ -28,7 +28,7 @@ class PosterDataset(Dataset):
             img = self.transform(img)
         label = self.data.iloc[idx, 1].strip().split(" ")
         label = [int(num) for num in label]
-        label = torch.LongTensor(label)
+        label = torch.Tensor(label)
         title = self.data.iloc[idx, 2]
         return img, label, title, imdb_id
 

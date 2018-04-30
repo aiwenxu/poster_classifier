@@ -1,24 +1,52 @@
-# from torchvision.models import resnet18 as ResNet
-#
-# resnet = ResNet(True)
-#
-# print(resnet)
+#TODO
 
-# import pandas as pd
-# from PIL import Image
-# import os.path
-#
-#
-# test = pd.read_csv("data/test_labels.csv", encoding="ISO-8859-1")
-# validate = pd.read_csv("data/validate_labels.csv", encoding="ISO-8859-1")
-# train = pd.read_csv("data/train_labels.csv", encoding="ISO-8859-1")
-#
-# print(len(test))
-# print(len(validate))
-# print(len(train))
-
-
-from helper import clamp_probs
 import torch
+from torchvision.transforms import Scale, CenterCrop, ToTensor, Normalize, Compose
+from torch.utils.data import DataLoader
+from torch.autograd import Variable
+from PosterDataset import PosterDataset
+from CustomizedResNet import get_customized_resnet
+from helper import clamp_probs
 
-print(clamp_probs(torch.FloatTensor([0.5, 0.5, 0.2, 0.9, 0])))
+def main():
+
+    NET_PARAMS_DIR = "net_params"
+
+    TEST_LABELS_DIR = "data/test_labels.csv"
+    DATA_DIR = "data/posters"
+
+    NUM_LABELS = 28
+
+    data_transforms = Compose([Scale(268), CenterCrop(224), ToTensor(), Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])])
+
+    test_dataset = PosterDataset(csv_file=TEST_LABELS_DIR, root_dir=DATA_DIR, transform=data_transforms)
+
+    test_loader = DataLoader(test_dataset)
+
+    use_gpu = torch.cuda.is_available()
+
+    poster_net = get_customized_resnet(NUM_LABELS)
+    poster_net.load_state_dict(torch.load(NET_PARAMS_DIR))
+
+    if use_gpu:
+        poster_net = poster_net.cuda()
+
+    for data in test_loader:
+
+        img, label, title, imdb_id = data
+
+        if use_gpu:
+            img = Variable(img.cuda())
+            label = Variable(label.cuda())
+        else:
+            img, label = Variable(img), Variable(label)
+
+        prediction = poster_net(img)
+        pred_label = clamp_probs(prediction.data[0])
+        print(pred_label)
+        print(label.data[0])
+        input()
+
+
+if __name__ == '__main__':
+    main()

@@ -18,7 +18,7 @@ def clamp_probs(probs):
         else:
             output.append(0)
 
-    output = torch.LongTensor(output)
+    output = torch.Tensor(output)
 
     return output
 
