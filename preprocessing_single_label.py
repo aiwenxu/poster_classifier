@@ -3,25 +3,20 @@ import random
 from PIL import Image
 from helper import quick_print
 
-# This returns ['Short', 'Thriller', 'Family', 'Adventure', 'Documentary', 'Musical', 'Mystery', 'Western', 'Romance',
-# 'Animation', 'Game-Show', 'Horror', 'Biography', 'Film-Noir', 'Reality-TV', 'Fantasy', 'Action', 'History', 'News',
-# 'Adult', 'Talk-Show', 'Sport', 'Crime', 'Music', 'Sci-Fi', 'War', 'Comedy', 'Drama']. 28 different labels in total.
+# This returns ['Adult', 'Music', 'Sport', 'Romance', 'Sci-Fi', 'Thriller', 'Film-Noir', 'History', 'Adventure',
+# 'Crime', 'Musical', 'Action', 'Drama', 'Fantasy', 'Family', 'Biography', 'Western', 'Short', 'Mystery', 'War',
+# 'Animation', 'Comedy', 'Talk-Show', 'Horror', 'Documentary']. 25 different labels in total.
 def get_all_genres(data_file):
     genre_set = set([])
     for index, row in data_file.iterrows():
         genre = row["Genre"]
         if isinstance(genre, str):
-            genre_set.update(genre.split("|"))
+            genre_set.add(genre.split("|")[0])
     return list(genre_set)
 
 def get_label(genre, genre_list):
-    label = ""
-    genre = genre.split("|")
-    for possible_genre in genre_list:
-        if possible_genre in genre:
-            label += "1 "
-        else:
-            label += "0 "
+    genre = genre.split("|")[0]
+    label = str(genre_list.index(genre))
     return label
 
 def get_all_labels(data_file, data_dict, genre_list):
@@ -51,7 +46,7 @@ def main():
     genre_list = get_all_genres(data_file)
     data_dict = {"imdb_id": [], "title":[], "label": []}
     get_all_labels(data_file, data_dict, genre_list)
-    pd.DataFrame(data=data_dict).to_csv("data/multilabel/labels.csv", index=False)
+    pd.DataFrame(data=data_dict).to_csv("data/singlelabel/labels.csv", index=False)
 
     # Split the labels into a training set, a validation set and a testing set.
     # Only the testing set is specified below. The remaining is the training set.
@@ -81,9 +76,9 @@ def main():
             train_data_dict["title"].append(data_dict["title"][i])
             train_data_dict["label"].append(data_dict["label"][i])
 
-    pd.DataFrame(data=test_data_dict).to_csv("data/multilabel/test_labels.csv", index=False)
-    pd.DataFrame(data=validate_data_dict).to_csv("data/multilabel/validate_labels.csv", index=False)
-    pd.DataFrame(data=train_data_dict).to_csv("data/multilabel/train_labels.csv", index=False)
+    pd.DataFrame(data=test_data_dict).to_csv("data/singlelabel/test_labels.csv", index=False)
+    pd.DataFrame(data=validate_data_dict).to_csv("data/singlelabel/validate_labels.csv", index=False)
+    pd.DataFrame(data=train_data_dict).to_csv("data/singlelabel/train_labels.csv", index=False)
 
 if __name__ == '__main__':
     main()

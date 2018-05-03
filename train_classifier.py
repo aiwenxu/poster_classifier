@@ -10,7 +10,7 @@ import copy
 import os
 from PosterDataset import PosterDataset
 from CustomizedResNet import get_customized_resnet
-from helper import quick_print, clamp_probs, pickle_stat, plot
+from helper import quick_print, clamp_probs, pickle_stat
 
 def main():
 
@@ -25,8 +25,8 @@ def main():
 
     # Data.
 
-    TRAIN_LABELS_DIR = "data/train_labels.csv"
-    VALIDATE_LABELS_DIR = "data/validate_labels.csv"
+    TRAIN_LABELS_DIR = "data/multilabel/train_labels.csv"
+    VALIDATE_LABELS_DIR = "data/multilabel/validate_labels.csv"
     DATA_DIR = "data/posters"
 
     NUM_LABELS = 28
@@ -137,9 +137,6 @@ def main():
 
         pickle_stat(val_losses, folder_name + "/val_losses.pkl")
         pickle_stat(val_accs, folder_name + "/val_accs.pkl")
-
-        plot(val_losses, folder_name + "/val_losses.pdf")
-        plot(val_accs, folder_name + "val_accs.pdf")
 
     time_elapsed = time.time() - since
     quick_print("Training complete in {:.0f}m {:.0f}s".format(time_elapsed // 60, time_elapsed % 60))
