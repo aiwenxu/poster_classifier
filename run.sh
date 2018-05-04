@@ -12,4 +12,4 @@
 #SBATCH --gres=gpu:1  # To request GPU, include this line. You can specify kind and number of GPU.
 #SBATCH --share
 
-python train_classifier.py
+python train_classifier_single_label.py

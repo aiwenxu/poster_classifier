@@ -10,11 +10,12 @@ from helper import quick_print
 
 class PosterDataset(Dataset):
 
-    def __init__(self, csv_file, root_dir, transform=None):
+    def __init__(self, csv_file, root_dir, transform=None, single_label=True):
 
         self.data = pd.read_csv(csv_file)
         self.root_dir = root_dir
         self.transform = transform
+        self.single_label = single_label
 
     def __len__(self):
         return len(self.data)
@@ -26,9 +27,12 @@ class PosterDataset(Dataset):
         img = img.convert("RGB")
         if self.transform:
             img = self.transform(img)
-        label = self.data.iloc[idx, 1].strip().split(" ")
-        label = [int(num) for num in label]
-        label = torch.Tensor(label)
+        if self.single_label:
+            label = torch.LongTensor([int(self.data.iloc[idx, 1])])[0]
+        else:
+            label = self.data.iloc[idx, 1].strip().split(" ")
+            label = [int(num) for num in label]
+            label = torch.Tensor(label)
         title = self.data.iloc[idx, 2]
         return img, label, title, imdb_id
 
