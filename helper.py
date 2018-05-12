@@ -27,6 +27,11 @@ def pickle_stat(o, file_name):
     with open(file_name, "wb") as f:
         pickle.dump(o, f)
 
+def load_stats(file_name):
+
+    with open(file_name, "rb") as f:
+        return pickle.load(f)
+
 def plot(vector, file_name):
     x = range(len(vector))
     plt.clf()

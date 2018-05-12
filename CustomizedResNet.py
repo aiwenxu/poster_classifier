@@ -1,3 +1,5 @@
+# The ResNet that can be used to achieve multi-label classification.
+
 import torch.nn as nn
 from torchvision.models import resnet18 as ResNet
 
