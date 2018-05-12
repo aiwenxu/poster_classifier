@@ -29,3 +29,4 @@ The poster images are downloaded [here](https://www.kaggle.com/neha1703/movie-ge
 ### Testing results:
 
 We use the best validation accuracy model, i.e., the network parameters saved from the training instance 2 to calculate the final testing accuracy.
+The final test accuracy is 0.4033258173618940.
